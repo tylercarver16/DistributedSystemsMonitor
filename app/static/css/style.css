@@ -19,6 +19,7 @@ body {
 .nav-logo {
     color: white;
     font-size: 24px;
+    margin-right: 40px;
     text-decoration: none;
 }
 .nav-links a {
@@ -88,3 +89,4 @@ body {
 .content-container {
     padding: 20px;
 }
+

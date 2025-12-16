@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ECharts</title>
+</head>
+<body>
+  <h1 class="chart-title">Apache ECharts Test</h1>
+
+  <!-- DOM container for chart -->
+  <div id="main"></div>
+
+  <!-- Load locally hosted ECharts -->
+  <script src="{{ url_for('static', filename='vendor/echarts.min.js') }}"></script>
+  <!-- Load your custom chart logic -->
+  <script src="{{ url_for('static', filename='js/chart_test.js') }}"></script>
+</body>
+</html>

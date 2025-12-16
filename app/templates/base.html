@@ -10,13 +10,27 @@
 <body>
     <nav class="navbar">
         <div class="nav-container">
-            <a href="{{ url_for('main.dashboard') }}" class="nav-logo">Dashboard</a>
+            <!-- Left side nav: Dashboard + History -->
+            <div class="nav-left">
+                <a href="{{ url_for('main.dashboard') }}" class="nav-logo">Dashboard</a>
+
+                {% if current_user.is_authenticated and current_user.type == 'Admin' %}
+                    <a href="{{ url_for('main.history') }}" class="nav-logo">Historical</a>
+                {% endif %}
+            </div>
+
+            <!-- Right side nav: User management + Logout -->
             <div class="nav-links">
-                <a href="{{ url_for('main.manage_users') }}">Manage Users</a>
-                <a href="{{ url_for('auth.logout') }}">Logout</a>
+                {% if current_user.is_authenticated %}
+                    {% if current_user.type == 'Admin' %}
+                        <a href="{{ url_for('main.manage_users') }}">Manage Users</a>
+                    {% endif %}
+                    <a href="{{ url_for('auth.logout') }}">Logout</a>
+                {% endif %}
             </div>
         </div>
     </nav>
+
     <div class="content-container">{% block content %}{% endblock %}</div>
 </body>
 </html>
