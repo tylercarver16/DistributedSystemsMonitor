@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="dashboard-container">
+    <h1 class="dashboard-title">System History</h1>
+
+    <div class="charts-container">
+        {% for machine, logs in machine_logs.items() %}
+            <div class="chart-card">
+                <h3>CPU – {{ machine }}</h3>
+                <canvas id="cpuHistory_{{ machine }}"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Memory – {{ machine }}</h3>
+                <canvas id="memoryHistory_{{ machine }}"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Disk – {{ machine }}</h3>
+                <canvas id="diskHistory_{{ machine }}"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Network – {{ machine }}</h3>
+                <canvas id="networkHistory_{{ machine }}"></canvas>
+            </div>
+        {% endfor %}
+    </div>
+
+    <script id="history-data" type="application/json">
+        {{ machine_logs | tojson }}
+    </script>
+</div>
+
+<script src="{{ url_for('static', filename='vendor/chart.js') }}"></script>
+<script src="{{ url_for('static', filename='js/history.js') }}"></script>
+{% endblock %}
