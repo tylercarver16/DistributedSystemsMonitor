@@ -1,162 +1,219 @@
-# Resource Radar
+# Distributed Systems Monitor
+
+A secure, web-based distributed systems monitoring platform built with **Flask**, **Netdata**, and **Gunicorn**, designed to collect, log, and visualize system metrics across a **five-machine cluster**.
+
+This project was developed incrementally across multiple course phases, covering system security hardening, secure web deployment, and distributed monitoring.
+
+---
 
 ## Overview
 
-Resource Radar is a Flask-based web application designed to help users efficiently manage and track resources. It supports user authentication via Google OAuth and provides an admin panel for managing users. This guide is designed for beginners, particularly undergraduate students, and explains each module in detail.
+The Distributed Systems Monitor provides:
 
-## Project Structure
+- Real-time monitoring of CPU, memory, disk, and network usage  
+- Historical analysis using metrics logged at fixed intervals  
+- Role-based access control (RBAC) distinguishing Admin and User privileges  
+- Secure, production-style deployment using Gunicorn, Nginx, and HTTPS  
+- Fault tolerance when cluster nodes are unreachable  
+
+The system was deployed live at **tcarver.me** and later archived to avoid ongoing hosting costs. Screenshots and documentation are included to preserve proof of functionality.
+
+---
+
+## Architecture
+
+### High-Level Components
+
+#### Flask Application
+- Central controller for the system
+- Handles authentication and RBAC enforcement
+- Aggregates metrics and renders dashboards
+
+#### Netdata Agents (5 Machines)
+- Each machine runs a Netdata agent
+- Metrics exposed via HTTP API
+- API access restricted to cluster members only
+
+#### Database
+- Stores timestamped metrics at 10-minute intervals
+- Supports historical trend queries
+
+#### Deployment Stack
+- **Gunicorn** – WSGI application server  
+- **Nginx** – Reverse proxy and HTTPS termination  
+- **Unix socket** – Inter-process communication  
+- **Certbot** – TLS certificate management  
+
+---
+
+## Features
+
+### Distributed Monitoring
+- Collects metrics from five machines in a cluster
+- Uses Netdata APIs to retrieve:
+  - CPU usage
+  - Memory usage
+  - Disk usage
+  - Network activity
+
+### Logging & Historical Data
+- Metrics logged every **10 minutes**
+- Historical trends viewable over multiple days
+- Database queries optimized for **< 1 second** frontend response time
+
+### Role-Based Access Control (RBAC)
+
+**Admin**
+- View real-time metrics
+- View historical metrics
+- Full cluster visibility
+
+**User**
+- View real-time metrics only
+
+Unauthorized access redirects users to a dedicated error page.
+
+### Fault Tolerance
+- Handles unreachable machines gracefully
+- Logs errors and stores `NULL` values in the database
+- Continues monitoring remaining nodes without crashing
+
+---
+
+## Security Foundations
+
+This project builds on earlier phases focused on security and deployment.
+
+### Project Part 1 – System Hardening
+- Ubuntu 24.04 server hardened using **Lynis**
+- Key-based SSH authentication enforced
+- Password-based SSH authentication disabled
+- Improved system hardening index
+
+### Project Part 2 – Secure Web Deployment
+- Python **3.13** compiled from source (`/opt/python3`)
+- Custom WSGI server (`unicorn.py`) implemented for learning purposes
+- HTTPS enforced using **Certbot**
+- Firewall configured to restrict exposed ports
+- SSH moved to a non-standard port
+
+---
+
+## WSGI Server Evolution
+
+This project demonstrates progression from low-level understanding to production tooling.
+
+1. **Custom WSGI Server (`unicorn.py`)**
+   - Implemented in Project Part 2
+   - Provided hands-on experience with socket-based request handling and the WSGI interface
+
+2. **Gunicorn**
+   - Adopted in Project Part 3
+   - Production-grade WSGI server
+   - Uses the same Nginx + Unix socket architecture
+
+---
+
+## Screenshots
+
+Screenshots captured during live deployment are available in:
 
 ```
-cop4521-flask/
-├── LICENSE
-├── README.md
-├── app
-│   ├── __init__.py
-│   ├── admin.py
-│   ├── auth.py
-│   ├── models.py
-│   ├── routes.py
-│   ├── static/
-│   │   ├── css/style.css
-│   │   └── js/dashboard.js
-│   └── templates/
-│       ├── base.html
-│       ├── dashboard.html
-│       ├── login.html
-│       ├── manage_users.html
-│       └── unauthorized.html
-├── config.py
-├── pyproject.toml
-├── requirements.txt
-├── run.py
+docs/screenshots/
 ```
 
-## Files and Directories
+They demonstrate:
+- Google OAuth login
+- RBAC enforcement (Admin vs User)
+- Real-time monitoring dashboard
+- Historical metrics visualization
+- Handling of unreachable cluster nodes
+- HTTPS-enabled deployment
 
-- `app`: Contains the main application code.
-  - `__init__.py`: Initializes the Flask app, sets up extensions, and registers blueprints.
-  - `admin.py`: Configures Flask-Admin, which provides an admin interface for managing users.
-  - `auth.py`: Handles user authentication via Google OAuth, including login and logout routes.
-  - `models.py`: Defines the database schema, including the `User` model.
-  - `routes.py`: Defines the main application routes, such as the dashboard and user management views.
-  - `static/`: Contains static files such as CSS and JavaScript for styling and interactivity.
-  - `templates/`: Contains HTML templates used to render pages dynamically.
-- `config.py`: Stores configuration settings such as database URI and authentication credentials.
-- `requirements.txt`: Lists the dependencies required to run the project.
-- `run.py`: Entry point for running the Flask application.
+---
 
-## Getting Started
+## Running Locally
 
 ### Prerequisites
+- Python 3.13+
+- Netdata (optional for local testing)
 
-Ensure you have Python installed on your system. You can download it from [python.org](https://www.python.org/).
+### Setup
 
-### Installation
-
-1. Fork the repository and clone it:
-   ```bash
-   git clone https://gitlab.com/yourusername/cop4521-flask.git
-   ```
-2. Navigate to the project directory:
-   ```bash
-   cd cop4521-flask
-   ```
-3. Create a virtual environment:
-   ```bash
-   /opt/python3/bin/python3.13 -m venv venv
-   source venv/bin/activate
-   ```
-   `/opt/bin/python3.13` is the python you have installed in your server. However, you might have python installed at another location in your own computer, so specify python accordingly.
-
-> The rest of the steps assumes your python venv has been correctly activated.
-
-4. Install pip using ensurepip (if you don't have pip already installed).
-   ```bash
-   python3 -m ensurepip
-   ```
-   
-6. Install dependencies:
-   ```bash
-   python -m pip install -r requirements.txt
-   ```
-
-## Setting Up Google Authentication Credentials
-
-To enable Google authentication:
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com/).
-2. Create a new project. You can do this from top left where it says **Select a Project.** If you already have a project, your project name will be in place of **Select a Project.**
-3. In **APIs & Services > Oauth consent screen** setup the details of your app. Make sure you set your **Audience** as **External**.
-4. Go to **APIs & Services > Credentials** and click on Create credentials, and create **OAuth Client ID**.
-5. Make sure the Application type is **Web Application** and the Authorized redirect URIs is set as ```http://127.0.0.1:8000/callback```
-6. This creates an Oauth2.0 application, which you can open to see the **Client ID** and **Client Secret**.
-7. Create a `.env` file in the project root (the base project folder) and add following credentials. Make sure you replace your-client-id and your-client-secret with the keys given by Oauth2.0.
-   ```bash
-   GOOGLE_CLIENT_ID=your-client-id
-   GOOGLE_CLIENT_SECRET=your-client-secret
-   SECRET_KEY=unique-flask-app-identifier
-   ```
-> To generate the unique flask app identifier, you can do the following in the terminal. There might be other ways of doing the same.
 ```bash
-python -c "import secrets; print(secrets.token_hex(32))"
+/opt/python3/bin/python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 ```
 
-## Database Migrations
-
-Since the project uses Flask-Migrate, you need to initialize and apply database migrations when making changes to the schema.
-
-1. Initialize migrations (only needed the first time):
-   ```bash
-   flask db init
-   ```
-2. Generate a migration script whenever the database schema changes:
-   ```bash
-   flask db migrate -m "Describe changes here"
-   ```
-3. Apply the migration to update the database:
-   ```bash
-   flask db upgrade
-   ```
-
-## Usage
-
-To run the application, execute:
+### Run (Development)
 
 ```bash
 python run.py
 ```
-Open the link shown in the terminal (usually http://127.0.0.1:8000) to see your Flask app.
-If it's running on a different port (e.g. http://localhost:5000), make sure your callback URL matches it, like http://localhost:5000/callback.
 
-Also, add https://yourwebsite.me/callback to the callback list so it works online too.
+### Run with Gunicorn (Production-Style)
 
-## Managing Users via Flask Shell
-Now you’ll see a Login with Google button.
-If you log in, you’ll probably get an Unauthorized message.
-That’s because your app doesn’t know who you are yet—your email isn’t in the database.
+```bash
+./venv/bin/gunicorn --workers 4 --bind unix:/tmp/flask.sock run:app
+```
 
-To manually add a user to the database, in your terminal:
+> Gunicorn must be executed from within the virtual environment to avoid conflicts with system-wide Python installations.
 
-1. Open the Flask shell:
-   ```bash
-   flask shell
-   ```
-2. Import the necessary modules:
-   ```python
-   from app.models import db, User
-   ```
-3. Create and add a user:
-   ```python
-   user = User(username="new_username", email="youremail@gmail.com", type="Admin")
-   db.session.add(user)
-   db.session.commit()
-   ```
-Once your email is added, Google verifies you, and the app lets you in as admin.
-To add more users, just use the Manage Users link in the app.
-## License
+---
 
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+## Logs & Database
 
-## Contact
+- Runtime logs are excluded from version control
+- A sample log is included for reference:
 
-For questions or suggestions, open an issue or contact the project maintainer at [prms.regmi@gmail.com](mailto\:prms.regmi@gmail.com).
+```
+logs/sample_metric.log
+```
+
+## Repository Structure
+
+```
+cop4521-flask/
+├── app/
+│   ├── auth.py
+│   ├── admin.py
+│   ├── routes.py
+│   ├── models.py
+│   ├── netdata_utils.py
+│   ├── static/
+│   └── templates/
+├── docs/
+│   └── screenshots/
+├── tests/
+├── log_metrics.py
+├── run.py
+├── requirements.txt
+├── README.md
+└── LICENSE
+```
+
+---
+
+## Project Status
+
+This project was fully deployed and demonstrated on a production server.  
+The live instance was intentionally shut down after course completion to avoid hosting costs.
+
+All functionality is preserved through:
+- Source code
+- Documentation
+- Screenshots
+
+---
+
+## Skills Demonstrated
+
+- Distributed systems monitoring
+- Secure Linux server administration
+- Flask application architecture
+- Netdata API integration
+- Role-based access control
+- Production deployment (Gunicorn + Nginx + HTTPS)
+- Fault-tolerant system design
+- Clean Git and documentation practices
